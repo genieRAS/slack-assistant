@@ -6,3 +6,4 @@ openai
 slack-sdk 
 slack-bolt 
 flask
+langchain-google-genai
