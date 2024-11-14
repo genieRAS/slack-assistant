@@ -1,3 +1,4 @@
+import os
 from langchain.chat_models import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains import LLMChain
@@ -10,17 +11,17 @@ from langchain.prompts.chat import (
 
 load_dotenv(find_dotenv())
 
-def answer_tech_question(user_input, format = "Slack App"):
+def answer_tech_question(user_input, model):
 
-    chat = ChatOpenAI(model_name="grok-beta", temperature=, base_url="https://api.x.ai/v1")
-
-    # chat = ChatGoogleGenerativeAI(
-    #     model="gemini-1.5-pro",
-    #     temperature=0,
-    #     max_tokens=None,
-    #     timeout=None,
-    #     max_retries=2,
-    # )
+    print(model)
+    
+    chat = ChatOpenAI(model_name="grok-beta", temperature=0, base_url="https://api.x.ai/v1") if model == "Grok" else ChatGoogleGenerativeAI(
+                    model="gemini-1.5-pro",
+                    temperature=0,
+                    max_tokens=None,
+                    timeout=None,
+                    max_retries=2,
+                )
 
 
     template = f"""

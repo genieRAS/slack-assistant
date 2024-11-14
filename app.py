@@ -15,6 +15,10 @@ SLACK_BOT_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 SLACK_SIGNING_SECRET = os.environ["SLACK_SIGNING_SECRET"]
 SLACK_BOT_USER_ID = os.environ["SLACK_BOT_USER_ID"]
 
+config = {
+    "LLM_MODEL": os.environ['LLM_MODEL'],
+}    
+
 # Initialize the Slack app
 app = App(token=SLACK_BOT_TOKEN)
 
@@ -64,12 +68,27 @@ def handle_mentions(body, say):
     text = text.replace(mention, "").strip()
 
     say("I'm processing data...", thread_ts=thread_ts)
-    response = answer_tech_question(text)
+    response = answer_tech_question(text, config['LLM_MODEL'])
     print(response)
     say(
         text=response, 
         thread_ts=thread_ts
     )
+
+
+@app.command("/dev-bot")
+def handle_hello_command(body, ack, say):
+    # Acknowledge the command request
+    ack()
+
+    print(body)
+    new_config = {
+        "LLM_MODEL": body['text'],
+    }
+    config.update(new_config)
+
+    # Respond to the user
+    say(f"Hi <@{body['user_id']}>! I updated llm model to {body['text']}")
 
 
 @flask_app.route("/slack/events", methods=["POST"])
