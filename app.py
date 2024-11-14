@@ -1,6 +1,7 @@
 import os
 from dotenv import find_dotenv, load_dotenv
 from flask import Flask, request
+from functions import answer_tech_question
 
 # Load environment variables from .env file
 load_dotenv(find_dotenv())
@@ -11,7 +12,7 @@ flask_app = Flask(__name__)
 
 @flask_app.route("/")
 def hello_world():
-    response = "Hello World!"
+    response = answer_tech_question("How to become a great developer?")
     return response
 
 # Run the Flask app
