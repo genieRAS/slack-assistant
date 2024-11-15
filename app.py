@@ -57,8 +57,7 @@ def fetch_thread_replies(channel_id, ts):
     params = {
         "channel": channel_id,
         "ts": ts,
-        "inclusive": "true",
-        "limit": 100  # Adjust the limit as needed
+        "limit": 1000  # Adjust the limit as needed
     }
     response = requests.post("https://slack.com/api/conversations.replies", headers=headers, params=params)
     return response.json()
