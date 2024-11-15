@@ -1,11 +1,13 @@
 import os
+import requests
+import json
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from slack_bolt.adapter.flask import SlackRequestHandler
 from slack_bolt import App
 from dotenv import find_dotenv, load_dotenv
 from flask import Flask, request
-from functions import answer_tech_question
+from functions import answer_tech_question, answer_with_history
 
 # Load environment variables from .env file
 load_dotenv(find_dotenv())
@@ -48,6 +50,38 @@ def get_bot_user_id():
     except SlackApiError as e:
         print(f"Error: {e}")
 
+def fetch_thread_replies(channel_id, ts):
+    headers = {
+        "Authorization": f"Bearer {SLACK_BOT_TOKEN}"
+    }
+    params = {
+        "channel": channel_id,
+        "ts": ts,
+        "inclusive": "true",
+        "limit": 100  # Adjust the limit as needed
+    }
+    response = requests.post("https://slack.com/api/conversations.replies", headers=headers, params=params)
+    return response.json()
+
+# def fetch_thread_replies(channel, thread_ts):
+#     """
+#     Fetch all thread replies in a channel using the Slack API.
+#     Returns:
+#         messages: all threads replies.
+#     """
+#     try:
+#         slack_client = WebClient(token=os.environ["SLACK_BOT_TOKEN"])
+#         result = slack_client.conversations_history(
+#             channel=channel,
+#             ts=thread_ts,
+#             inclusive=False,
+#             limit=1000  # Adjust the limit as per your needs
+#         )
+#         print(result["messages"])
+#         return result["messages"]
+#     except SlackApiError as e:
+#         print(f"Error: {e}")
+
 
 @app.event("app_mention")
 def handle_mentions(body, say):
@@ -67,13 +101,20 @@ def handle_mentions(body, say):
     mention = f"<@{SLACK_BOT_USER_ID}>"
     text = text.replace(mention, "").strip()
 
-    say("I'm processing data...", thread_ts=thread_ts)
-    response = answer_tech_question(text, config['LLM_MODEL'])
-    print(response)
-    say(
-        text=response, 
-        thread_ts=thread_ts
-    )
+    if text.lower().find("--allow-history--") != -1:
+        history_data = fetch_thread_replies(event["channel"], thread_ts)
+        filtered_history_data = map(lambda x: x["text"], history_data["messages"])
+        response = answer_with_history("Please summary the conversation", list(filtered_history_data), config['LLM_MODEL'])
+        say(
+            text=response, 
+            thread_ts=thread_ts
+        )
+    else:
+        response = answer_tech_question(text, config['LLM_MODEL'])
+        say(
+            text=response, 
+            thread_ts=thread_ts
+        )
 
 
 @app.command("/dev-bot")
